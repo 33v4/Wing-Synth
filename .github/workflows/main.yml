@@ -1,0 +1,74 @@
+name: Build Wing Synth VST3
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    name: Build Windows x64 VST3
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Prepare MSVC and Windows SDK environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Verify build tools
+        shell: pwsh
+        run: |
+          cmake --version
+          ninja --version
+          clang-cl --version
+
+      - name: Configure Release build
+        run: >-
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_C_COMPILER=clang-cl
+          -DCMAKE_CXX_COMPILER=clang-cl
+
+      - name: Build VST3
+        run: cmake --build build --target WingSynth_VST3 --parallel
+
+      - name: Package installation ZIP
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $plugin = Join-Path $PWD 'build/WingSynth_artefacts/Release/VST3/Wing Synth.vst3'
+          if (-not (Test-Path -LiteralPath $plugin -PathType Container)) {
+            throw "Expected VST3 bundle was not found: $plugin"
+          }
+          if (-not (Test-Path -LiteralPath 'INSTALL-WING-SYNTH.txt' -PathType Leaf)) {
+            throw 'INSTALL-WING-SYNTH.txt is missing from the repository root.'
+          }
+
+          $package = Join-Path $PWD 'dist'
+          New-Item -ItemType Directory -Force -Path $package | Out-Null
+          Copy-Item -LiteralPath $plugin -Destination $package -Recurse -Force
+          Copy-Item -LiteralPath 'INSTALL-WING-SYNTH.txt' -Destination $package -Force
+
+          $zip = Join-Path $PWD 'Wing-Synth-VST3-Windows-x64.zip'
+          Compress-Archive -Path (Join-Path $package '*') -DestinationPath $zip -Force
+          if (-not (Test-Path -LiteralPath $zip -PathType Leaf)) {
+            throw 'The VST3 installation ZIP was not created.'
+          }
+          "Created downloadable artifact: Wing-Synth-VST3-Windows-x64.zip" |
+            Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+
+      - name: Upload downloadable VST3 ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: Wing-Synth-VST3-Windows-x64
+          path: Wing-Synth-VST3-Windows-x64.zip
+          if-no-files-found: error
+          retention-days: 30
