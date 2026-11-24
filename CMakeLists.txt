@@ -23,7 +23,11 @@ juce_add_plugin(WingSynth
   COPY_PLUGIN_AFTER_BUILD FALSE
   VST3_CATEGORIES Instrument Synth)
 
+
 target_sources(WingSynth PRIVATE Source/PluginProcessor.cpp Source/PluginEditor.cpp)
+juce_generate_juce_header(WingSynth)
 target_compile_features(WingSynth PRIVATE cxx_std_17)
 target_compile_definitions(WingSynth PUBLIC JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
 target_link_libraries(WingSynth PRIVATE juce::juce_audio_utils juce::juce_dsp PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+
+
