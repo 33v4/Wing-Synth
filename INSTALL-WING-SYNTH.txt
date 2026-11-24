@@ -1,0 +1,10 @@
+WING SYNTH — WINDOWS VST3 INSTALLATION
+
+1. Extract this ZIP.
+2. Copy the entire “Wing Synth.vst3” folder to:
+   C:\Program Files\Common Files\VST3
+3. Restart FL Studio (or use its plugin manager to rescan plugins).
+4. Find “Wing Synth” in the instrument/plugin list and load it.
+5. Send MIDI notes to play. Choose a vowel and shape it with the controls.
+
+This is a MIDI instrument. It does not generate lyrics or use recorded voice samples.
